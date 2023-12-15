@@ -1,6 +1,8 @@
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import Column
+from sqlalchemy import inspect
+from sqlalchemy import create_engine
 from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy import ForeignKey
@@ -43,5 +45,17 @@ class Address(Base):
         return f"Address (id={self.id}, email={self.email_address})"  # Não precisa inserir a chave estrangeira
 
 
-print(User.__tablename__)
-print(Address.__tablename__)
+# Conexão com o DataBase
+
+engine = create_engine("sqlite://")
+
+# Criando as classes como tabela no banco de dados
+
+Base.metadata.create_all(engine)
+
+# Investiga o esquema do banco de dados
+
+inspetor_engine = inspect(engine)
+print(inspetor_engine.has_table("user_account"))  # Retornando True
+print(inspetor_engine.get_table_names())  # Vendo os nomes das tabelas criadas
+print(inspetor_engine.default_schema_name)
