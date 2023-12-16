@@ -2,11 +2,13 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import relationship
 from sqlalchemy import Column
+from sqlalchemy import func
 from sqlalchemy import inspect
 from sqlalchemy import create_engine
 from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy import ForeignKey
+from sqlalchemy import select
 
 Base = declarative_base()
 
@@ -84,3 +86,42 @@ with Session(engine) as session:
     session.add_all([kaique, maria, victor])
 
     session.commit()  # Marca o fim da transação e envia para o DB
+
+print('Recuperando usuários a partir de condição de filtragem')
+stmt = select(User).where(User.name.in_(['Kaique', 'Victor']))  # Selecione User Onde Name == 'Kaique'
+for user in session.scalars(stmt):
+    print(user)
+
+
+print('\nRecuperando endereços email de Maria')
+stmt_address = select(Address).where(Address.user_id.in_([2]))  # user_id é referente ao id da classe User
+for address in session.scalars(stmt_address):
+    print(address)
+
+print('\nRecuperando info de maneira ordenada')
+print('Forma crescente que vem por padrão')
+stmt_order_cresc = select(User).order_by(User.fullname)
+for result in session.scalars(stmt_order_cresc):
+    print(result)
+
+print('\nForma decrescente')
+stmt_order_decr = select(User).order_by(User.fullname.desc())
+for result in session.scalars(stmt_order_decr):
+    print(result)
+
+print()
+stmt_join = select(User.fullname, Address.email_address).join_from(Address, User)
+for result in session.scalars(stmt_join):  # Scalars pega somente o resultado, por isso não voltou o email
+    print(result)
+print(select(User.fullname, Address.email_address).join_from(Address, User))
+
+print('\nExecutando statement a partir da connection')
+connection = engine.connect()
+results = connection.execute(stmt_join).fetchall()  # Retornar tudo
+for res in results:
+    print(res)
+
+print('\nTotal de instâncias em User:')
+stmt_count = select(func.count('*')).select_from(User)
+for result in session.scalars(stmt_count):  # Scalars pega somente o resultado, por isso não voltou o email
+    print(result)
